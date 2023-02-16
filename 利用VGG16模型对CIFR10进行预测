@@ -1,0 +1,52 @@
+import torch
+import torchvision
+from torch.nn import Linear
+from torch.utils.data import DataLoader
+
+from torch import nn, optim
+
+loader_vgg16_unpretrain=torchvision.models.vgg16(pretrained=False)
+loader_vgg16_pretrain=torchvision.models.vgg16(pretrained=False)
+#print(loader_vgg16_unpretrain)
+#print(loader_vgg16_pretrain)
+loader_vgg16_pretrain.classifier.add_module('7',Linear(1000,10,))
+loader_vgg16_unpretrain.classifier.add_module('7',Linear(1000,10,))
+#print(loader_vgg16_unpretrain)
+#print(loader_vgg16_pretrain)
+
+
+#保存我们修改过的模型
+#方法一：直接保存模型
+torch.save(loader_vgg16_unpretrain,'vgg16_CIFAR10.pth')
+torch.save(torchvision.models.vgg16(pretrained=False),'vgg16_CIFAR1000.pth')
+#方法二：把模型保存为字典形式
+torch.save(loader_vgg16_unpretrain.state_dict(),'vgg16_CIFAR10.dic')
+
+my_test_data=torchvision.datasets.CIFAR10('C:\\Users\\Lenovo\\PycharmProjects\\pytorch\\LOG',train=False,transform=torchvision.transforms.ToTensor(),download=True)
+my_test_data_loader=DataLoader(my_test_data,100,shuffle=False)
+our_optim=optim.SGD(loader_vgg16_unpretrain.parameters(),lr=0.1)
+
+#测试一下对vgg16稍加更改后对于分类CIFAR10数据集的损失函数情况
+#for imgs,targets in my_test_data_loader:
+    #my_nn_data_imags=loader_vgg16_unpretrain.forward(imgs)
+    #my_nn_data_imags1 = loader_vgg16_pretrain.forward(imgs)
+    #loss=nn.CrossEntropyLoss()
+    #my_loss=loss.forward(my_nn_data_imags,targets)
+    #print(my_loss)
+    #my_finished_loss=loss.forward(my_nn_data_imags1,targets)
+    #print(my_finished_loss)
+    #print(my_finished_loss-my_loss)
+
+
+#加入反向传播以及优化器降低代价函数
+#for i in range(20):
+    #J=0
+    #for img1s,targets2 in my_test_data_loader:
+        #our_optim.zero_grad()
+        #my_nn_data_imags = loader_vgg16_unpretrain.forward(img1s)
+        #loss=nn.CrossEntropyLoss()
+        #myloss=loss.forward(my_nn_data_imags,targets2)
+        #myloss.backward()
+        #our_optim.step()
+        #J=J+myloss
+    #print(J)
