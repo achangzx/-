@@ -1,0 +1,68 @@
+import torch
+import torchvision
+from PIL import Image
+from torch import argmax
+from torch.nn import Linear, Sequential, Conv2d, MaxPool2d, Flatten
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
+from torch import nn
+
+dog='下载.jpg'
+dog_pil=Image.open(dog)
+print(dog_pil)
+dog_pil=dog_pil.convert('RGB')             #避免png，jpg可能是四通道的情况，先把她转换成三通道
+my_transforms=torchvision.transforms.Compose([torchvision.transforms.Resize((32,32)),torchvision.transforms.ToTensor()])
+my_dog=my_transforms(dog_pil)
+print(my_dog.shape)
+my_dog1=torch.reshape(my_dog,(1,3,32,32))              #我们的神经网络tudui要求输出图片的格式是(n,3,32,32)
+
+class my_nn(nn.Module):
+    def __init__(self):
+        super(my_nn, self).__init__()
+        self.mood=Sequential(Conv2d(3,32,5,padding=2),
+                           MaxPool2d(2),
+                           Conv2d(32,32,5,padding=2),
+                           MaxPool2d(2),
+                           Conv2d(32,64,5,padding=2),
+                           MaxPool2d(2),
+                           Flatten(),
+                           Linear(1024,64),
+                           Linear(64,10),
+        )
+        self.cov_layer1=Conv2d(3,32,5,padding=2)
+        self.pool_layer1=MaxPool2d(2)
+        self.cov_layer2=Conv2d(32,32,5,padding=2)
+        self.pool_layer2=MaxPool2d(2)
+        self.cov_layer3=Conv2d(32,64,5,padding=2)
+        self.pool_layer3=MaxPool2d(2)
+        self.flatten=Flatten()
+        self.linear=Linear(1024,64)
+        self.linear2 = Linear(64,10)
+    def forward(self,x):
+            x=self.mood(x)
+            return x
+
+moudle=my_nn()
+moudle.load_state_dict(torch.load('tudui第20论训练结果的模型参数.pth'))
+
+
+my_data=torchvision.datasets.CIFAR10('C:\\Users\\Lenovo\\PycharmProjects\\pytorch\\LOG',train=False,transform=torchvision.transforms.ToTensor(),download=True)
+my_data_load=DataLoader(my_data,64,shuffle=False)
+right_number=0
+for imgs,target in my_data_load:
+    with torch.no_grad():
+        imgs_load=moudle.forward(imgs)
+        print(target)
+        right_number=right_number+(imgs_load.argmax(1)==target).sum()
+print('使用第二十轮训练结果的正确率为{}'.format(right_number/len(my_data)))
+
+#加载我们自己的照片,总共预测10次，看结果
+for i in range(10):
+    moudle.eval()
+    with torch.no_grad():
+        my_dog_load=moudle.forward(my_dog1)
+        print(my_dog_load.argmax(1))
+print(my_data.classes)
+
+结论：比较合理的可以预测网上随机的图片
